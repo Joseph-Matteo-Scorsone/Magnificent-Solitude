@@ -1,2 +1,11 @@
 # Visual Studio
 .vscode/
+
+# build
+build/
+
+# source code to test and run in dev
+src/
+
+# logs
+logs/
