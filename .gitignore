@@ -8,4 +8,4 @@ build/
 src/
 
 # logs
-logs/
+logs/mag_sol_logging.db

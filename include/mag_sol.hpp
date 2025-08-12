@@ -195,11 +195,16 @@ private:
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                     now.time_since_epoch()) % 1000;
 
+        // Use thread-safe gmtime_r on Unix/Linux or gmtime_s on Windows
         std::tm tm_utc{};
-        if (gmtime_s(&tm_utc, &time_t_now) != 0) {
-            std::cerr << "Failed to convert time\n";
-            return;
-        }
+        #ifdef _WIN32
+            if (gmtime_s(&tm_utc, &time_t_now) != 0) {
+        #else
+            if (gmtime_r(&time_t_now, &tm_utc) == nullptr) {
+        #endif
+                std::cerr << "Failed to convert time\n";
+                return;
+            }
 
         std::ostringstream timestamp_ss;
         timestamp_ss << std::put_time(&tm_utc, "%Y-%m-%d %H:%M:%S");
@@ -217,15 +222,15 @@ private:
             return;
         }
 
-        sqlite3_bind_text(stmt, 1, timestamp_ss.str().c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 2, event_type.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 1, timestamp_ss.str().c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, event_type.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 3, actor_id);
         if (sender_id >= 0) {
             sqlite3_bind_int(stmt, 4, sender_id);
         } else {
             sqlite3_bind_null(stmt, 4);
         }
-        sqlite3_bind_text(stmt, 5, details.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 5, details.c_str(), -1, SQLITE_TRANSIENT);
         
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
