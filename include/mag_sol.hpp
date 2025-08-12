@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <variant>
 #include <unordered_map>
 #include <vector>
@@ -63,11 +64,10 @@ public:
 
     template<typename T>
     static Message makeFuncPayload(int sender_id, void (T::*method)()) {
-        auto func = Func([method](void* actor_ptr) {
-            auto* typed_actor = static_cast<T*>(actor_ptr);
-            (typed_actor->*method)();
-        });
-        return Message(sender_id, std::move(func));
+        auto func = [method](void* actor_ptr) {
+            std::invoke(method, static_cast<T*>(actor_ptr));
+        };
+        return Message(sender_id, Func(std::move(func)));
     }
 
     template<typename F>
