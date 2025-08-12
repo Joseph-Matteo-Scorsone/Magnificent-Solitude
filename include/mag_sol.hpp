@@ -197,14 +197,16 @@ private:
 
         // Use thread-safe gmtime_r on Unix/Linux or gmtime_s on Windows
         std::tm tm_utc{};
+        if (
         #ifdef _WIN32
-            if (gmtime_s(&tm_utc, &time_t_now) != 0) {
+            gmtime_s(&tm_utc, &time_t_now) != 0
         #else
-            if (gmtime_r(&time_t_now, &tm_utc) == nullptr) {
+            gmtime_r(&time_t_now, &tm_utc) == nullptr
         #endif
-                std::cerr << "Failed to convert time\n";
-                return;
-            }
+        ) {
+            std::cerr << "Failed to convert time\n";
+            return;
+        }
 
         std::ostringstream timestamp_ss;
         timestamp_ss << std::put_time(&tm_utc, "%Y-%m-%d %H:%M:%S");
